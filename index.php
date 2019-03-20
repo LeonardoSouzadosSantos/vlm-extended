@@ -1,11 +1,12 @@
+<?php error_reporting(0); ?>
 <html>
     <head>
         <title>VLC Extended</title>
-        <script src='jquery.min.js'></script>
-        <link rel="stylesheet" href='jquery-ui.min.css' />
-        <script src='jquery-ui.min.js'></script>
-        <script src='clappr.min.js'></script>
-        <script src='moment.min.js'></script>
+        <script src='includes/js/jquery.min.js'></script>
+        <link rel="stylesheet" href='includes/css/jquery-ui.min.css' />
+        <script src='includes/js/jquery-ui.min.js'></script>
+        <script src='includes/js/clappr.min.js'></script>
+        <script src='includes/js/moment.min.js'></script>
         <style>
             body {
                 font-family: arial;
@@ -50,35 +51,32 @@
         </style>
     </head>
     <body>
-    <center>Para adicionar mais arquivos de midia, mova-os para o diretorio: /Applications/MAMP/htdocs/files/videos.<br/><b>Arquivos de Midia</b></center><br/>
+    <center>Para adicionar mais arquivos de midia, mova-os para o diretorio: C:/xampp3/htdocs/here/files/videos.<br/><b>Arquivos de Midia</b></center><br/>
     <div style='background-color: #333333;border-radius: 15px;width:100%;margin: 0 auto;left:0;display: table;'>
         <?php
-            $videos = glob("/Applications/MAMP/htdocs/files/videos/*.{mp4,mkv,avi,mov,wmv}", GLOB_BRACE);
+            $videos = glob("C:/xampp3/htdocs/here/files/videos/*.{mp4,mkv,avi,mov,wmv}", GLOB_BRACE);
             foreach($videos as $video) {
-                $time = exec("/Applications/MAMP/htdocs/ffmpeg -i ".$video." 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//");
+                $time = exec("ffmpeg -i ".$video." 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//");
                 $temp_file = tempnam(sys_get_temp_dir(), 'thumbnail_');
                 rename($temp_file, $temp_file .= '.png');
                 $seconds = (explode(':', $time)[0]*60) + (explode(':', $time)[1]*60) + explode(':', $time)[2];
-                $cmd = '/Applications/MAMP/htdocs/ffmpeg -y -ss '.number_format($seconds/10, 0, '', '').' -i '.$video.' -vframes 1 -q:v 2 '.$temp_file.' 2>&1';
+                $cmd = 'ffmpeg -y -ss '.number_format($seconds/10, 0, '', '').' -i '.$video.' -vframes 1 -q:v 2 '.$temp_file.' 2>&1';
                 shell_exec($cmd );
                 $content = 'data:image/png;base64,'.base64_encode(file_get_contents($temp_file));
                 echo "<div style='float:left;padding: 20px;width:25%;display: table-row' class='video'><center><img src='".$content."' style='width:256px;height:144px;border-radius: 15px;' />";
-                echo "<br/><h3 class='videonome'>".end(explode("/", $video))."</h3>";
+                $aux = explode("/", $video);
+                echo "<br/><h3 class='videonome'>".end($aux)."</h3>";
                 echo "<h3 class='videotempo'>".$time."</h3></center></div>";
             }
         ?>
         </div>
-        <!--<a href='pause.php'>Play/Pause Cliente</a>
-        <br/>
-        <a href='pausetelnet.php'>Play/Pause Canal</a>
-        <br/>-->
         <br/>
         <center><h3>Previa da midia(Apenas MP4)</h3></center>
         <center><div id="player" style='display: none;'></div></center>
         <br/>
         <script>
             var player = new Clappr.Player({
-                source: "<?php echo "files/videos/".end(explode("/", $videos[0])); ?>",
+                source: "<?php echo "./files/videos/".end(explode("/", $videos[0])); ?>",
                 mimeType: 'video/mp4',
                 mute: false,
                 parentId: "#player"
@@ -90,16 +88,92 @@
             </div>
         </center>
         <br/>
-        <div id='vlmconfdiv' class='modal'>
+        <center>
+            <div style='width: 100%;display: block;'>
+                <button id='logoconf'>Agendar Logo</button>
+            </div>
+        </center>
+        <br/>
+        <center>
+            <div style='width: 100%;display: block;'>
+                <button id='subconf'>Agendar Exibição de texto</button>
+            </div>
+        </center>
+        <br/>
+        <div id='logoconfdiv' class='modal'>
             <div class='modal-content'>
-                <form action='telnettest.php' method='get'>
-                    <input type='text' name='name' style='width:100%' placeholder='Nome do agendamento'/><br/>
+                <form action='telnet/subfilter.php' method='get'>
+                    <input type='hidden' name='acao' value='Logo'/>
                     <br/>
-                    <input type='datetime-local' name='time' style='width:100%' step='1'/><br/>
+                    <p style='color:black;'>Data da programação:</p> <input type='datetime-local' name='timefrom' style='width:100%' step='1'/><br/>
+                    <br/>
+                    <p style='color:black;'>Data de término:</p> <input type='datetime-local' name='timeto' style='width:100%' step='1'/><br/>
+                    <br/>
+                    <p style='color:black;'>Posição</p>
+                    <select name='position' style='width:100%;'>
+                        <option value='0'>Centro</option>
+                        <option value='1'>Esquerda</option>
+                        <option value='2'>Direita</option>
+                        <option value='4'>Centro Superior</option>
+                        <option value='5'>Superior Esquerdo</option>
+                        <option value='6'>Superior Direito</option>
+                        <option value='8'>Centro Inferior</option>
+                        <option value='9'>Inferior Esquerdo</option>
+                        <option value='10'>Inferior Direito</option>
+                    </select>
                     <br/>
                     <?php
+                    $videos = glob("C:/xampp3/htdocs/here/files/images/*.{mp4,mkv,avi,mov,wmv}", GLOB_BRACE);
                         foreach($videos as $video) {
-                            $time = exec("/Applications/MAMP/htdocs/ffmpeg -i ".$video." 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//");
+                            $time = exec("C:/xampp3/htdocs/ffmpeg -i ".$video." 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//");
+                            echo "<input type='radio' name='address' value='$video'/><b style='color: black;'>".end(explode("/", $video))."</b><br/>";
+                        }
+                    ?>
+                        <br/>
+                    <input type='submit'/>
+                </form>
+            </div>
+        </div>
+        <div id='subconfdiv' class='modal'>
+            <div class='modal-content'>
+                <form action='telnet/subfilter.php' method='get'>
+                    <input type='hidden' name='acao' value='Texto'/>
+                    <textarea name='text' placeholder='Texto' style='width:100%;'></textarea>
+                    <br/>
+                    <p style='color:black;'>Data da programação:</p> <input type='datetime-local' name='timefrom' style='width:100%' step='1'/><br/>
+                    <br/>
+                    <p style='color:black;'>Por quanto tempo (em segundos) (0 dura para sempre): </p>
+                    <input type='number' value='0' style='width:100%;' name='timeout'/>
+                    <p style='color:black;'>Posição</p>
+                    <select name='position' style='width:100%;'>
+                        <option value='0'>Centro</option>
+                        <option value='1'>Esquerda</option>
+                        <option value='2'>Direita</option>
+                        <option value='4'>Centro Superior</option>
+                        <option value='5'>Superior Esquerdo</option>
+                        <option value='6'>Superior Direito</option>
+                        <option value='8'>Centro Inferior</option>
+                        <option value='9'>Inferior Esquerdo</option>
+                        <option value='10'>Inferior Direito</option>
+                    </select>
+                    
+                    <br/>
+                    <br/>
+                    <input type='submit'/>
+                </form>
+            </div>
+        </div>
+        <div id='vlmconfdiv' class='modal'>
+            <div class='modal-content'>
+                <form action='telnet/vlm.php' method='get'>
+                    <input type='text' name='name' style='width:100%' placeholder='Nome do agendamento'/><br/>
+                    <br/>
+                    <p style='color:black;'>Data/Hora da programação: </p><input type='datetime-local' name='time' style='width:100%' step='1'/><br/>
+                    <br/>
+                    <?php
+                    $videos = glob("C:/xampp3/htdocs/here/files/videos/*.{mp4,mkv,avi,mov,wmv}", GLOB_BRACE);
+                        foreach($videos as $video) {
+                            $time = exec("C:/xampp3/htdocs/ffmpeg -i ".$video." 2>&1 | grep Duration | cut -d ' ' -f 4 | sed s/,//");
                             echo "<input type='checkbox' name='address' value='$video'/><b style='color: black;'>".end(explode("/", $video))."</b><br/>";
                         }
                     ?>
@@ -110,7 +184,7 @@
         </div>
         <div>
             <?php
-                include "telnet.php";
+                include "telnet/telnet.php";
                 $con = new Telnet();
                 $schedules = $con->sendCommand("show");
                 $here = explode('enabled : yes', str_replace('next launch', '', explode('Unknown', substr($schedules, strpos($schedules, 'schedule')+10))[0]));
@@ -154,10 +228,24 @@
             btn.onclick = function () {
                 modal.style.display = "block";
             }
+            var logodiv = document.getElementById('logoconfdiv');
+            var logo = document.getElementById("logoconf");
+            logo.onclick = function () {
+                logodiv.style.display = "block";
+            }
             window.onclick = function (event) {
-                if (event.target == modal) {
+                if (event.target == logodiv) {
+                    logodiv.style.display = "none";
+                } else if (event.target == subdiv) {
+                    subdiv.style.display = "none";
+                } else if (event.target == modal) {
                     modal.style.display = "none";
                 }
+            }
+            var subdiv = document.getElementById('subconfdiv');
+            var sub = document.getElementById("subconf");
+            sub.onclick = function () {
+                subdiv.style.display = "block";
             }
             $(document).ready(function() {
                 $( ".modal-content" ).draggable();
