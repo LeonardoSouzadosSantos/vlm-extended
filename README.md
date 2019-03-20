@@ -1,4 +1,4 @@
-# vlm-extended
+# VLM Extended Interface
 Web Interface to control VLC/VLM features through PHP.<br/>
 VLC need to be open.<br/>
 FFMPEG needed for thumbnails and media durations (and anything else wanted).<br/>
